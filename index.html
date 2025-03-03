@@ -1,29 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-
-    <!-- Don't use this in production: -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apoorva's Spinning Wheel</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .wheel-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+    }
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      border: 8px solid #333;
+      transition: transform 4s ease-out;
+      pointer-events: none;
+    }
+    /* Create the colored segments with a conic-gradient */
+    .wheel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        #ffcc00 0deg 72deg,
+        #ff6600 72deg 144deg,
+        #ff0000 144deg 216deg,
+        #00cc66 216deg 288deg,
+        #0099ff 288deg 360deg
+      );
+      pointer-events: none;
+    }
+    /* Position the text for each segment */
+    .segment {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      pointer-events: none;
+    }
+    /* Adjust each segment's rotation so that its text is centered along its wedge. */
+    .segment1 {
+      --angle: 36deg;
+      transform: rotate(var(--angle)) translateY(-110px) rotate(calc(-1 * var(--angle)));
+    }
+    .segment2 {
+      --angle: 108deg;
+      transform: rotate(var(--angle)) translateY(-110px) rotate(calc(-1 * var(--angle)));
+    }
+    .segment3 {
+      --angle: 180deg;
+      transform: rotate(var(--angle)) translateY(-110px) rotate(calc(-1 * var(--angle)));
+    }
+    .segment4 {
+      --angle: 252deg;
+      transform: rotate(var(--angle)) translateY(-110px) rotate(calc(-1 * var(--angle)));
+    }
+    .segment5 {
+      --angle: 324deg;
+      transform: rotate(var(--angle)) translateY(-110px) rotate(calc(-1 * var(--angle)));
+    }
+    /* The pointer on top of the wheel */
+    .pointer {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 30px;
+      background-color: red;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+      z-index: 10;
+      pointer-events: none;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
 </head>
-
 <body>
-    <div id="root"></div>
+  <h1>Apoorva, Spin the Wheel!</h1>
+  <div class="wheel-container">
+    <div class="pointer"></div>
+    <div class="wheel" id="wheel">
+      <div class="segment segment1">₹0</div>
+      <div class="segment segment2">₹10</div>
+      <div class="segment segment3">₹50</div>
+      <div class="segment segment4">₹100</div>
+      <div class="segment segment5">₹500</div>
+    </div>
+  </div>
+  <button id="spinButton">Spin the Wheel</button>
+  <div id="result"></div>
 
-    <!-- important that type should be text babel -->
-    <script type="text/babel">
-        const rootElement = document.getElementById("root")
-        // accessing ReactDOM which is available in window object
-        const root = ReactDOM.createRoot(rootElement)
-        // accessing CreateRoot which is available inside root
-        root.render(<h1>Hi</h1>)
-    </script>
+  <script>
+    const prizes = ["₹0", "₹10", "₹50", "₹100", "₹500"];
+    const spinButton = document.getElementById("spinButton");
+    const resultDiv = document.getElementById("result");
+    const wheel = document.getElementById("wheel");
+
+    let spinning = false;
+    let currentRotation = 0;
+
+    const spinWheel = () => {
+      if (spinning) return;
+      spinning = true;
+      spinButton.disabled = true;
+      resultDiv.innerText = "";
+
+      // Choose a random index from 0 to 4
+      const randomStop = Math.floor(Math.random() * prizes.length);
+      const anglePerPrize = 360 / prizes.length; // 72 degrees per segment
+      // The center angle for each wedge is: 36°, 108°, 180°, 252°, 324°
+      const centerAngle = 36 + randomStop * anglePerPrize;
+      // To align the chosen segment's center with the pointer at top (0°),
+      // the wheel must be rotated by (360 - centerAngle)
+      const desiredRotation = 360 - centerAngle;
+      const extraRotations = 5 * 360; // extra full rotations for effect
+      const totalRotation = extraRotations + desiredRotation;
+      currentRotation += totalRotation;
+
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      // Listen for the transition end event
+      const onTransitionEnd = () => {
+        spinning = false;
+        spinButton.disabled = false;
+        resultDiv.innerText = `Apoorva, you won ${prizes[randomStop]}! 🎉`;
+        // Remove the listener so it only runs once per spin
+        wheel.removeEventListener("transitionend", onTransitionEnd);
+      };
+
+      wheel.addEventListener("transitionend", onTransitionEnd);
+    };
+
+    spinButton.addEventListener("click", spinWheel);
+  </script>
 </body>
-
 </html>
